@@ -41,13 +41,45 @@ const styles = {
 
 
 class App extends Component {
+    
+    webview = null;
+
     constructor(props) {
         super(props);
 
         this.state = {
-            uri: "http://github.com/dsjsantos"
+            uri: "http://github.com/dsjsantos",
+            hooked: false,
+            hookedURL: ""
+
         }
     }
+
+    handleWebViewNavigationStateChange = newNavState => {
+        // newNavState looks like this:
+        // {
+        //   url?: string;
+        //   title?: string;
+        //   loading?: boolean;
+        //   canGoBack?: boolean;
+        //   canGoForward?: boolean;
+        // }
+        const { url } = newNavState;
+        if (!url) {
+            return;
+        }
+
+        // handle specific doctypes
+        if (url.includes('.pdf')) {
+            this.webview.stopLoading();
+
+            this.setState({
+                hooked: true,
+                hookedURL: url
+            });
+        }
+
+    }    
 
     render() {
 /*
@@ -72,9 +104,15 @@ class App extends Component {
                 <View style={styles.header}>
                     <Text style={styles.headertext}>Expo Test - WebApp ({Math.trunc(deviceWidth)}x{Math.trunc(deviceHeight)})</Text>
                 </View>
+                { this.state.hooked &&
+                <View style={styles.header}>
+                    <Text style={styles.headertext}>{this.state.hookedURL}</Text>
+                </View>
+                }
                 <WebView 
-                    ref={DEFAULT_REF}
+                    ref={ref => (this.webview = ref)}
                     source={{uri: this.state.uri}}
+                    onNavigationStateChange={this.handleWebViewNavigationStateChange}
                     javaScriptEnabled={true}
                     domStorageEnabled={true}
                     scalesPageToFit={true}
